@@ -8,13 +8,17 @@ Cソースコードを解析するためのツール
 | cohesion.sh   | Cソースコードの凝集度を計算する              |
 
 # デモ
-TBD
+## extcallrel
+sample/sample.c の呼び出し関係
+
+![デモ画像](./figure/sample.c.png)
 
 # 事前準備
-## 実行環境（想定）
+## 実行環境
+### 想定
 - Bourne Shell
 
-## 実行環境（動作確認済）
+### 動作確認済
 - MacBook Air M2
 - macOS Monterey 12.6.1
 - ターミナル 2.12.7
