@@ -8,9 +8,13 @@ set -eu
 print_usage_and_exit () {
   cat <<-USAGE 1>&2
 	Usage   : ${0##*/} [Cソースファイル]
-	Options : 
+	Options : -r
 
 	Cソースファイルの凝集度（LCOM3）を計算する。
+	-rオプションにより関数・変数の定義と、関数から変数へのアクセスの一覧を出力する。
+	 F：関数の定義
+	 V：変数の定義
+	 C：関数から変数へのアクセス
 	USAGE
   exit 1
 }
@@ -43,6 +47,7 @@ fi
 
 # 初期設定
 opr=''
+opt_r='no'
 
 # 引数をパース
 i=1
@@ -50,6 +55,7 @@ for arg in ${1+"$@"}
 do
   case "$arg" in
     -h|--help|--version) print_usage_and_exit ;;
+    -r)                  opt_r='yes'          ;;
     *)
       if [ $i -eq $# ] && [ -z "$opr" ] ; then
         opr=${arg}
@@ -76,6 +82,7 @@ fi
 
 # パラメータを決定
 csrc=$opr
+isrel=$opt_r
 
 ######################################################################
 # 前準備
@@ -132,8 +139,7 @@ uniq                                                                 |
 join -1 2 -2 1 -o 1.1,1.2 - "$tmpval"                                |
 
 # 呼び出し関係を成形
-awk '{ print $1, "->", $2; }'                                        |
-awk '{ print "C", $1; }'                                             |
+awk '{ print "C", $1, $2 }'                                          |
 
 {
   # クロスリファレンスを出力
@@ -148,15 +154,21 @@ awk '{ print "C", $1; }'                                             |
   cat
 }                                                                    |
 
-# 凝集度を計算
-awk '
-$1 == "F" { cnt_function++; }
-$1 == "V" { cnt_value++;    }
-$1 == "C" { cnt_call++;     }
-END { 
-  mol = cnt_call/cnt_value - cnt_function;
-  den = 1 - cnt_function;
+if [ "$isrel" = "no" ]; then
+  # 凝集度を出力
+  awk -v isrel=$isrel '
+  $1 == "F" { cnt_function++; }
+  $1 == "V" { cnt_value++;    }
+  $1 == "C" { cnt_call++;     }
 
-  print "'"$csrc"'", mol / den;
-}
-'
+  END {
+    mol = cnt_call/cnt_value - cnt_function;
+    den = 1 - cnt_function;
+
+    print "'"$csrc"'", mol / den;
+  }
+  '
+else
+  # 関数・変数の定義と、関数から変数へのアクセスの一覧を出力
+  cat
+fi
